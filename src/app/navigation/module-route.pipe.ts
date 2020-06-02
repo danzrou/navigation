@@ -1,5 +1,4 @@
 import { Pipe, PipeTransform } from '@angular/core';
-import { UrlTree } from '@angular/router';
 import { NavigationService } from './navigation.service';
 
 @Pipe({
@@ -12,6 +11,6 @@ export class ModuleRoutePipe implements PipeTransform {
     if (!module) {
       return undefined;
     }
-    return this.service.getModuleRoute(module, extras);
+    return this.service.getModuleCommands(module, extras);
   }
 }

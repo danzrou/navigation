@@ -1,52 +1,68 @@
 import { Inject, Injectable } from '@angular/core';
-import { ExtraOptions, Router, ROUTER_CONFIGURATION } from '@angular/router';
-import { toBoolean } from '@siemplify/utils';
+import {
+  ExtraOptions as NgRouterOptions,
+  NavigationExtras,
+  Router,
+  ROUTER_CONFIGURATION
+} from '@angular/router';
+import { isEmptyString, toBoolean } from '@siemplify/utils';
 import {
   mergeNavConfig,
   NAVIGATION_CONFIG,
   NavigationConfig,
   NavigationRouteConfig
 } from './config';
+import { encodeNavData } from './navigation-data';
 
 let service: NavigationService;
 
-export function getCurrentHost(withProtocol: boolean = true) {
-  const protocol = window.location.protocol;
-  const host = window.location.host;
-  return withProtocol ? `${protocol}//${host}/` : `${host}/`;
-}
-
-export function getModuleUrl(module: string, config: NavigationRouteConfig) {
+export function getModuleUrl(
+  module: string,
+  config: NavigationRouteConfig = {}
+) {
   return service.getModuleUrl(module, config);
 }
 
 export function getModuleUrlTree(
   module: string,
-  config: NavigationRouteConfig
+  config: NavigationRouteConfig = {}
 ) {
   return service.getModuleUrlTree(module, config);
 }
 
 export function getModuleRoute(module: string, extras = []) {
-  return service.getModuleRoute(module, extras);
+  return service.getModuleCommands(module, extras);
+}
+
+export function getNavigationConfig() {
+  return service.getConfig();
 }
 
 @Injectable()
 export class NavigationService {
   constructor(
     @Inject(NAVIGATION_CONFIG) protected config: NavigationConfig,
-    @Inject(ROUTER_CONFIGURATION) protected routerConfig: ExtraOptions,
+    @Inject(ROUTER_CONFIGURATION) protected routerConfig: NgRouterOptions,
     protected router: Router
   ) {
-    service = this;
+    if (!service) {
+      service = this;
+    }
+  }
+
+  getConfig(): NavigationConfig {
+    return this.config;
   }
 
   getModuleUrlTree(module: string, config: NavigationRouteConfig) {
-    const { navExtras, extras, withBase } = mergeNavConfig(config);
-    const base = (withBase === true && this.getBaseRoute(false)) || '';
+    const { navExtras, extras, withBase, navigationData } = mergeNavConfig(
+      config
+    );
+    const route = this.getConfigRoute(module);
+    const base = (withBase && this.getBaseRoute(false)) || '';
     const urlTree = this.router.createUrlTree(
-      [base, module, ...extras],
-      navExtras
+      [base, ...this.splitRoute(route), ...extras],
+      this.addNavigationData(navExtras, navigationData)
     );
     return urlTree;
   }
@@ -57,7 +73,11 @@ export class NavigationService {
     );
   }
 
-  getModuleRoute(module: string, extras = []): any[] {
+  getModuleCommands(module: string, extras = []): any[] {
+    const route = this.getConfigRoute(module);
+    if (route) {
+      return [this.getBaseRoute(false), ...this.splitRoute(route), ...extras];
+    }
     return [this.getBaseRoute(false), module, ...extras];
   }
 
@@ -66,17 +86,35 @@ export class NavigationService {
     return this.router.navigateByUrl(route);
   }
 
-  getBaseRoute(full: boolean = true) {
+  getBaseRoute(withHash: boolean = true) {
     const baseRoute = this.config.baseRoute || '';
-    return (full && this.appendHash(baseRoute)) || baseRoute;
-  }
-
-  getRouteUrl(route: string, withBase: boolean = true, full: boolean = true) {
-    return (withBase && this.getBaseRoute(full)) || '';
+    return (withHash && this.appendHash(baseRoute)) || baseRoute;
   }
 
   protected appendHash(route: string) {
     const withHash = toBoolean(this.routerConfig.useHash);
     return `${withHash ? '#' : ''}${route}`;
+  }
+
+  protected getConfigRoute(id: string): string {
+    const route = this.config.routes.find((route) => route.id === id);
+    return (route && route.route) || id;
+  }
+
+  protected splitRoute(route: string) {
+    return (!isEmptyString(route) && route.split('/')) || [];
+  }
+
+  protected addNavigationData(
+    navExtras: NavigationExtras,
+    navigationData: any
+  ) {
+    if (navigationData) {
+      return {
+        ...navExtras,
+        queryParams: { [this.config.dataKey]: encodeNavData(navigationData) }
+      };
+    }
+    return navExtras;
   }
 }

@@ -5,12 +5,15 @@ export const NAVIGATION_CONFIG = new InjectionToken('NavigationConfig');
 
 export interface NavigationConfig<T = any> {
   baseRoute?: string;
+  routes?: { id: string; route: string }[];
+  dataKey?: string;
 }
 
-export interface NavigationRouteConfig {
+export interface NavigationRouteConfig<T extends object = object> {
   extras?: any[];
   navExtras?: NavigationExtras;
   withBase?: boolean;
+  navigationData?: T;
 }
 
 export function mergeConfig(
@@ -18,6 +21,8 @@ export function mergeConfig(
 ): NavigationConfig {
   return {
     baseRoute: 'main',
+    routes: [],
+    dataKey: 'navigationData',
     ...config
   };
 }

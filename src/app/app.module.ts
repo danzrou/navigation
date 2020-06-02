@@ -12,7 +12,23 @@ import { ParsePipe } from './parse.pipe';
     BrowserModule,
     AppRoutingModule,
     FormsModule,
-    NavigationModule.forRoot({ baseRoute: null })
+    NavigationModule.forRoot({
+      baseRoute: null,
+      routes: [
+        {
+          id: 'todos',
+          route: 'todos'
+        },
+        {
+          id: 'settings',
+          route: 'settings'
+        },
+        {
+          id: 'users',
+          route: 'users/main'
+        }
+      ]
+    })
   ],
   providers: [],
   bootstrap: [AppComponent]
