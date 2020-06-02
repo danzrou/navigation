@@ -3,7 +3,7 @@ import { NavigationExtras } from '@angular/router';
 
 export const NAVIGATION_CONFIG = new InjectionToken('NavigationConfig');
 
-export interface NavigationConfig<T = any> {
+export interface NavigationConfig {
   baseRoute?: string;
   routes?: { id: string; route: string }[];
   dataKey?: string;

@@ -3,7 +3,7 @@ import {
   ExtraOptions as NgRouterOptions,
   NavigationExtras,
   Router,
-  ROUTER_CONFIGURATION
+  ROUTER_CONFIGURATION, UrlTree
 } from '@angular/router';
 import { isEmptyString, toBoolean } from '@siemplify/utils';
 import {
@@ -54,7 +54,7 @@ export class NavigationService {
     return this.config;
   }
 
-  getModuleUrlTree(module: string, config: NavigationRouteConfig) {
+  getModuleUrlTree(module: string, config: NavigationRouteConfig): UrlTree {
     const { navExtras, extras, withBase, navigationData } = mergeNavConfig(
       config
     );
@@ -67,7 +67,7 @@ export class NavigationService {
     return urlTree;
   }
 
-  getModuleUrl(module: string, config: NavigationRouteConfig = {}) {
+  getModuleUrl(module: string, config: NavigationRouteConfig = {}): string {
     return this.appendHash(
       this.router.serializeUrl(this.getModuleUrlTree(module, config))
     );
@@ -81,12 +81,12 @@ export class NavigationService {
     return [this.getBaseRoute(false), module, ...extras];
   }
 
-  navigateToModule(module: string, config: NavigationRouteConfig = {}) {
+  navigateToModule(module: string, config: NavigationRouteConfig = {}): Promise<boolean> {
     const route = this.getModuleUrlTree(module, config);
     return this.router.navigateByUrl(route);
   }
 
-  getBaseRoute(withHash: boolean = true) {
+  getBaseRoute(withHash: boolean = true): string {
     const baseRoute = this.config.baseRoute || '';
     return (withHash && this.appendHash(baseRoute)) || baseRoute;
   }
